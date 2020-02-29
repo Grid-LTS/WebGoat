@@ -1,6 +1,7 @@
 package org.owasp.webgoat;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.owasp.webgoat.service.RestartLessonService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -29,13 +30,17 @@ public class DatabaseInitialization {
 
     @Bean(initMethod = "migrate")
     public Flyway flyWayContainer() {
-        return Flyway
+        FluentConfiguration flywayConfig = Flyway
                 .configure()
                 .configuration(Map.of("driver", driverClassName))
                 .dataSource(dataSource)
-                .schemas("container")
-                .locations("db/container")
-                .load();
+                .locations("db/container");
+        if (driverClassName != null && driverClassName.contains("postgresql")) {
+            flywayConfig.schemas("container");
+        } else {
+            flywayConfig.schemas("CONTAINER");
+        }
+        return flywayConfig.load();
     }
 
     @Bean(initMethod = "migrate")
